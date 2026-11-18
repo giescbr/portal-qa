@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal do QA</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: "Trebuchet MS", Verdana, Arial, sans-serif;
+    background: radial-gradient(circle at 20% 10%, #1a0b2e 0%, #05060f 60%);
+    color: #d6f7ff;
+    padding: 10px;
+    min-height: 100vh;
+  }
+  .painel {
+    position: relative;
+    background: rgba(10, 12, 28, .94);
+    border: 1px solid #00f0ff;
+    border-radius: 10px;
+    box-shadow: 0 0 18px rgba(0, 240, 255, .35), inset 0 0 40px rgba(255, 43, 214, .08);
+    padding: 12px;
+    overflow: hidden;
+  }
+  .painel::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,240,255,.03) 0px, rgba(0,240,255,.03) 1px, transparent 2px, transparent 4px);
+    pointer-events: none;
+  }
+  .topo {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 14px; padding-bottom: 10px; flex-wrap: wrap; position: relative;
+    border-bottom: 1px solid rgba(255, 43, 214, .6);
+    box-shadow: 0 6px 12px -8px rgba(255, 43, 214, .6);
+  }
+  .marca {
+    font-size: 13px; font-weight: bold; color: #fcee0a; order: 3;
+    text-shadow: 0 0 6px rgba(252, 238, 10, .7); letter-spacing: 2px;
+  }
+  .titulo { text-align: center; flex: 1; min-width: 220px; }
+  .titulo h1 {
+    font-size: 28px; margin: 0; letter-spacing: 8px; text-transform: uppercase;
+    color: #00f0ff; text-shadow: 0 0 6px #00f0ff, 0 0 18px rgba(0, 240, 255, .6);
+  }
+  .titulo h2 {
+    font-size: 22px; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 4px;
+    color: #ff2bd6; text-shadow: 0 0 10px rgba(255, 43, 214, .9);
+  }
+  .alerta {
+    background: rgba(0, 240, 255, .06); border: 1px solid #ff2bd6;
+    box-shadow: 0 0 10px rgba(255, 43, 214, .35);
+    padding: 8px 10px; font-size: 13px; min-width: 200px; text-align: center; color: #d6f7ff; display: flex; flex-direction: column; align-items: center;
+  }
+  .alerta .caixas { display: flex; gap: 4px; margin-top: 6px; justify-content: center; align-items: center; }
+  .alerta .caixas em { font-style: normal; color: #d6f7ff; font-size: 14px; margin-left: 6px; }
+  .alerta .caixas span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 30px;
+    font: bold 18px "Courier New", monospace; color: #fcee0a;
+    text-shadow: 0 0 8px rgba(252, 238, 10, .8);
+    border: 1px solid #00f0ff; background: rgba(0, 240, 255, .05);
+  }
+  .scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(0, 240, 255, .35); border-radius: 6px; position: relative;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 1150px; background: #0a0c1c; }
+  th, td {
+    border: 1px solid rgba(0, 240, 255, .22);
+    text-align: center; font-size: 14px; height: 52px; min-width: 36px;
+  }
+  th.semana {
+    background: #0a0c1c; color: #fcee0a; font-size: 12px; letter-spacing: 2px;
+    text-transform: uppercase; height: 34px;
+    text-shadow: 0 0 6px rgba(252, 238, 10, .7);
+    border-bottom: 1px solid #ff2bd6;
+  }
+  th.extra { color: #7fa9b3; font-size: 11px; }
+  th.dia {
+    background: #0a0c1c; color: #00f0ff; font-size: 14px; font-weight: bold;
+    position: sticky; top: 0; z-index: 2; height: 46px;
+    border-bottom: 1px solid #00f0ff; text-shadow: 0 0 6px rgba(0, 240, 255, .8);
+  }
+  th.dia small { display: block; font-size: 10px; color: #ff2bd6; font-weight: normal; letter-spacing: 1px; }
+  th.dia.fimsemana small { color: #fcee0a; }
+  th.canto {
+    text-align: left; padding-left: 10px; color: #fcee0a; background: #0a0c1c;
+    position: sticky; left: 0; z-index: 3; white-space: nowrap; min-width: 140px;
+    text-shadow: 0 0 6px rgba(252, 238, 10, .7); font-size: 12px; letter-spacing: 2px;
+  }
+  td.setor {
+    text-align: left; padding-left: 10px; background: #0a0c1c;
+    font-weight: bold; white-space: nowrap; min-width: 140px;
+    position: sticky; left: 0; z-index: 1; color: #ff2bd6;
+    text-shadow: 0 0 6px rgba(255, 43, 214, .7);
+    border-right: 1px solid #ff2bd6;
+  }
+  tr.linha:nth-child(even) td:not(.setor) { background: rgba(0, 240, 255, .04); }
+  td.cel { cursor: pointer; user-select: none; transition: background .15s, box-shadow .15s; }
+  td.cel:hover { background: rgba(0, 240, 255, .14) !important; box-shadow: inset 0 0 0 1px #00f0ff; }
+  td.cel:active { background: rgba(255, 43, 214, .22) !important; }
+  td.grupo-ini { border-left: 2px solid rgba(255, 43, 214, .6); }
+  .adesivo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 32px; border-radius: 6px;
+    font-weight: bold; font-size: 12px; font-family: "Courier New", monospace;
+  }
+  .feliz { background: #00f0ff; color: #05060f; box-shadow: 0 0 10px #00f0ff; }
+  .neutro { background: #fcee0a; color: #1a1500; box-shadow: 0 0 10px #fcee0a; }
+  .triste { background: #ff2bd6; color: #05060f; box-shadow: 0 0 10px #ff2bd6; }
+  .morto { background: #05060f; color: #ff2bd6; border: 1px solid #ff2bd6; box-shadow: 0 0 10px #ff2bd6; }
+  .nojo { background: #39ff14; color: #05060f; box-shadow: 0 0 10px #39ff14; }
+  .legenda {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-top: 14px; font-size: 13px; position: relative;
+  }
+  .legenda div { display: flex; align-items: center; gap: 10px; }
+  .legenda .adesivo { flex-shrink: 0; }
+  .aviso {
+    font-size: 12px; color: #7fa9b3; margin-top: 10px; text-align: right;
+    letter-spacing: 1px; position: relative;
+  }
+  .kaiju-bloco {
+    position: relative; margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid rgba(255, 43, 214, .6);
+  }
+  .kaiju-titulo {
+    text-align: center; margin: 0 0 12px; font-size: 22px; letter-spacing: 8px;
+    text-transform: uppercase; color: #fcee0a; text-shadow: 0 0 8px rgba(252, 238, 10, .8);
+  }
+  .kaiju-topo {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .kaiju-foto { height: 110px; overflow: hidden; display: flex; align-items: center; border-radius: 12px; isolation: isolate; filter: drop-shadow(0 0 8px rgba(0, 240, 255, .6)); }
+  .kaiju-foto img { height: 110px; width: auto; transform: scale(1.32); flex-shrink: 0; }
+  .desafio {
+    border: 1px solid #fcee0a; background: rgba(252, 238, 10, .06);
+    box-shadow: 0 0 12px rgba(252, 238, 10, .35);
+    padding: 10px 14px; text-align: center; min-width: 200px;
+  }
+  .desafio .rotulo {
+    font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+    color: #fcee0a; text-shadow: 0 0 6px rgba(252, 238, 10, .7);
+  }
+  .painel input {
+    background: #05060f; color: #d6f7ff; border: 1px solid #00f0ff;
+    border-radius: 4px; padding: 6px 8px; font: 14px "Courier New", monospace;
+    width: 100%; outline: none; box-shadow: inset 0 0 6px rgba(0, 240, 255, .2);
+  }
+  .painel input:focus { border-color: #ff2bd6; box-shadow: 0 0 8px rgba(255, 43, 214, .6); }
+  .desafio input { text-align: center; color: #fcee0a; border-color: #fcee0a; margin-top: 6px; font-weight: bold; }
+  .podio {
+    display: flex; align-items: flex-end; justify-content: center; gap: 10px;
+    margin: 10px 0 18px;
+  }
+  .lugar {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    width: 130px; padding: 10px 8px 12px;
+    border: 1px solid #ff2bd6; background: rgba(255, 43, 214, .06);
+    box-shadow: 0 0 12px rgba(255, 43, 214, .35);
+  }
+  .lugar span {
+    font: bold 22px "Courier New", monospace; color: #fcee0a;
+    text-shadow: 0 0 8px rgba(252, 238, 10, .8);
+  }
+  .lugar.l1 { height: 150px; }
+  .lugar.l2 { height: 120px; }
+  .lugar.l3 { height: 100px; }
+  .lugar input { text-align: center; }
+  .finalistas {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;
+  }
+  .card {
+    border: 1px solid rgba(0, 240, 255, .45); background: #0a0c1c;
+    padding: 10px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .card-setor {
+    font-weight: bold; color: #ff2bd6; text-shadow: 0 0 6px rgba(255, 43, 214, .7);
+    text-transform: uppercase; letter-spacing: 2px; font-size: 13px;
+  }
+  .card label {
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7fa9b3;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .chat-bloco {
+    position: relative; margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid rgba(255, 43, 214, .6);
+  }
+  .chat-titulo {
+    text-align: center; margin: 0 0 12px; font-size: 22px; letter-spacing: 8px;
+    text-transform: uppercase; color: #fcee0a; text-shadow: 0 0 8px rgba(252, 238, 10, .8);
+  }
+  .chat-form {
+    display: flex; flex-direction: column; gap: 10px;
+    border: 1px solid rgba(0, 240, 255, .45); background: #0a0c1c; padding: 12px;
+  }
+  .chat-form label {
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7fa9b3;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .chat-form select, .chat-form textarea {
+    background: #05060f; color: #d6f7ff; border: 1px solid #00f0ff;
+    border-radius: 4px; padding: 6px 8px; font: 14px "Courier New", monospace;
+    width: 100%; outline: none; box-shadow: inset 0 0 6px rgba(0, 240, 255, .2);
+  }
+  .chat-form textarea { min-height: 90px; resize: vertical; }
+  .chat-form button {
+    align-self: flex-end; background: #00f0ff; color: #05060f; border: none;
+    padding: 8px 16px; font: bold 13px "Courier New", monospace; letter-spacing: 2px;
+    cursor: pointer; box-shadow: 0 0 10px #00f0ff;
+  }
+  .chat-form button:hover { background: #ff2bd6; box-shadow: 0 0 10px #ff2bd6; }
+  .chat-lista { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .chat-lista .msg {
+    border-left: 2px solid #ff2bd6; padding: 6px 10px;
+    background: rgba(0, 240, 255, .05); font-size: 14px;
+  }
+  .chat-lista .msg small {
+    display: block; margin-bottom: 4px; color: #fcee0a;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .acesso {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 12px; font-size: 12px; letter-spacing: 1px; color: #7fa9b3; position: relative;
+  }
+  #status-acesso { color: #fcee0a; text-transform: uppercase; text-shadow: 0 0 6px rgba(252, 238, 10, .7); }
+  .acesso input { width: 170px; }
+  .acesso button {
+    background: #00f0ff; color: #05060f; border: none;
+    padding: 6px 12px; font: bold 12px "Courier New", monospace; letter-spacing: 2px;
+    cursor: pointer; box-shadow: 0 0 10px #00f0ff;
+  }
+  .acesso button:hover { background: #ff2bd6; box-shadow: 0 0 10px #ff2bd6; }
+  .acesso .erro { color: #ff2bd6; }
+  .painel input:disabled { opacity: .55; cursor: not-allowed; }
+  @media (orientation: portrait) {
+    .legenda { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="painel">
+  <div class="acesso">
+    <span id="status-acesso"></span>
+    <input type="password" id="senha-adm" placeholder="Senha do ADM" aria-label="Senha do ADM">
+    <button id="btn-entrar" type="button">ENTRAR</button>
+    <button id="btn-sair" type="button">SAIR</button>
+    <span id="erro-senha" class="erro"></span>
+  </div>
+  <div class="topo">
+    <div class="titulo">
+      <h1>PORTAL DO QA</h1>
+    </div>
+    <div class="alerta">
+      Uhu! Estamos sem alimentos vencidos há
+      <div class="caixas"><span>0</span><span>4</span><span>1</span><em>dias</em></div>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th class="canto" rowspan="2">Novembro/2026</th>
+          <th class="semana extra" rowspan="2">1</th>
+          <th class="semana" colspan="7">Semana 1 · 02 a 08</th>
+          <th class="semana" colspan="7">Semana 2 · 09 a 15</th>
+          <th class="semana" colspan="7">Semana 3 · 16 a 22</th>
+          <th class="semana" colspan="7">Semana 4 · 23 a 29</th>
+          <th class="semana extra" colspan="2">Fim do mês</th>
+        </tr>
+        <tr id="cabecalho"></tr>
+      </thead>
+      <tbody id="corpo"></tbody>
+    </table>
+  </div>
+
+  <div class="legenda">
+    <div><span class="adesivo feliz">:)</span> Parabéns Equipe!!! 100% – 83% de Adequação.</div>
+    <div><span class="adesivo triste">:(</span> Opa, esse não é o caminho! 69% até 1% de adequação.</div>
+    <div><span class="adesivo neutro">:|</span> Não desanimem, estamos quase lá, falta pouco! 82,9% à 70% de Adequação.</div>
+    <div><span class="adesivo morto">x_x</span> Vacilo, essa doeu!!! Alimento vencido ou presença de pragas.</div>
+    <div><span class="adesivo nojo">&gt;﹏&lt;</span> Ew!!! Precisamos de mais atenção na limpeza.</div>
+  </div>
+  <div class="aviso" id="aviso">&gt; Toque em uma célula para alternar o adesivo_</div>
+
+  <section class="kaiju-bloco">
+    <h2 class="kaiju-titulo">KAIJU</h2>
+    <div class="kaiju-topo">
+      <div class="kaiju-foto"><img src="kaiju.png" alt="Kaiju"></div>
+      <div class="desafio">
+        <div class="rotulo">Desafio final</div>
+        <input value="27/11" aria-label="Data do desafio final">
+      </div>
+    </div>
+
+    <div class="podio">
+      <div class="lugar l2"><span>2º</span><input placeholder="—" aria-label="2º lugar"></div>
+      <div class="lugar l1"><span>1º</span><input placeholder="—" aria-label="1º lugar"></div>
+      <div class="lugar l3"><span>3º</span><input placeholder="—" aria-label="3º lugar"></div>
+    </div>
+
+    <div class="finalistas">
+      <div class="card">
+        <div class="card-setor">Cozinha</div>
+        <label>Data da dinâmica <input value="20/11"></label>
+        <label>Finalista <input placeholder="Nome do funcionário"></label>
+      </div>
+      <div class="card">
+        <div class="card-setor">Estoque</div>
+        <label>Data da dinâmica <input value="Realizada"></label>
+        <label>Finalista <input value="Arthur"></label>
+      </div>
+      <div class="card">
+        <div class="card-setor">Salão</div>
+        <label>Data da dinâmica <input value="Realizada"></label>
+        <label>Finalista <input value="Victor"></label>
+      </div>
+      <div class="card">
+        <div class="card-setor">Sushibar e Peixaria</div>
+        <label>Data da dinâmica <input value="20/11"></label>
+        <label>Finalista <input placeholder="Nome do funcionário"></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="chat-bloco">
+    <h2 class="chat-titulo">CHAT COM O QA</h2>
+    <div class="chat-form">
+      <label>Tipo de contato
+        <select id="tipo">
+          <option>Preciso de ajuda</option>
+          <option>Suporte</option>
+          <option>Quero desabafar</option>
+        </select>
+      </label>
+      <label>Mensagem
+        <textarea id="mensagem" placeholder="Escreva aqui..."></textarea>
+      </label>
+      <button id="enviar">ENVIAR</button>
+    </div>
+    <div class="chat-lista" id="lista"></div>
+  </section>
+</div>
+
+<script>
+  // ===== CONFIGURAÇÃO DO MICROSOFT FORMS =====
+  // 1) No Forms, clique em "..." > "Obter link para preenchimento" e copie o link.
+  // 2) Cole o endereço base abaixo (tudo antes do "&").
+  // 3) Pegue o ID de cada pergunta (no link pré-preenchido aparecem como r + código, ex.: rAB12CD...)
+  //    e troque CAMPO_TIPO e CAMPO_MENSAGEM.
+  const FORMS_URL = "https://forms.office.com/r/SEU_CODIGO";
+  const CAMPO_TIPO = "rTIPO_AQUI";
+  const CAMPO_MENSAGEM = "rMENSAGEM_AQUI";
+
+  const setores = ["Cozinha", "Estoque", "Salão", "Sushibar"];
+  const estados = [
+    { cls: "", txt: "" },
+    { cls: "feliz", txt: ":)" },
+    { cls: "neutro", txt: ":|" },
+    { cls: "triste", txt: ":(" },
+    { cls: "morto", txt: "x_x" },
+    { cls: "nojo", txt: "&gt;﹏&lt;" }
+  ];
+  // Adesivos iniciais: índice do estado por [setor-dia]
+  const iniciais = {
+    "Sushibar-13": 4,
+    "Cozinha-21": 2,
+    "Sushibar-22": 1,
+    "Sushibar-23": 1,
+    "Sushibar-24": 1,
+    "Sushibar-25": 1,
+    "Sushibar-26": 1,
+    "Sushibar-27": 1
+  };
+
+  // Novembro/2026 começa num domingo. Índice de dia da semana: Seg=0 ... Dom=6
+  const nomesSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  // Colunas na ordem exibida: dia 1, semanas 2–29, depois 30 e 31
+  const colunas = [1];
+  for (let d = 2; d <= 29; d++) colunas.push(d);
+  colunas.push(30, 31);
+
+  const cabecalho = document.getElementById("cabecalho");
+  colunas.forEach(function (d) {
+    const th = document.createElement("th");
+    const fds = ((d + 5) % 7) >= 5;
+    th.className = "dia" + (fds ? " fimsemana" : "");
+    th.innerHTML = d + "<small>" + nomesSemana[(d + 5) % 7] + "</small>";
+    cabecalho.appendChild(th);
+  });
+
+  const corpo = document.getElementById("corpo");
+  setores.forEach(function (setor) {
+    const tr = document.createElement("tr");
+    tr.className = "linha";
+    const th = document.createElement("td");
+    th.className = "setor";
+    th.textContent = setor;
+    tr.appendChild(th);
+    colunas.forEach(function (d) {
+      const td = document.createElement("td");
+      td.className = "cel";
+      const chave = setor + "-" + d;
+      let estado = iniciais[chave] || 0;
+      render(td, estado);
+      td.addEventListener("click", function () {
+        if (!isAdmin) return;
+        estado = (estado + 1) % estados.length;
+        render(td, estado);
+      });
+      tr.appendChild(td);
+    });
+    corpo.appendChild(tr);
+  });
+
+  // ===== Chat: envia para o Microsoft Forms preenchido =====
+  document.getElementById("enviar").addEventListener("click", function () {
+    const campo = document.getElementById("mensagem");
+    const tipo = document.getElementById("tipo").value;
+    const texto = campo.value.trim();
+    if (!texto) return;
+
+    if (FORMS_URL.indexOf("SEU_CODIGO") !== -1) {
+      alert("Configure o link do Microsoft Forms no código (FORMS_URL).");
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set(CAMPO_TIPO, tipo);
+    params.set(CAMPO_MENSAGEM, texto);
+    window.open(FORMS_URL + "?" + params.toString(), "_blank", "noopener");
+
+    const item = document.createElement("div");
+    item.className = "msg";
+    const rotulo = document.createElement("small");
+    rotulo.textContent = tipo + " · enviado ao Forms";
+    const corpoMsg = document.createElement("div");
+    corpoMsg.textContent = texto;
+    item.appendChild(rotulo);
+    item.appendChild(corpoMsg);
+    document.getElementById("lista").prepend(item);
+    campo.value = "";
+  });
+
+  // ===== Acesso ADM =====
+  const SENHA_ADM = "@QAbot0205";
+  let isAdmin = false;
+  const statusAcesso = document.getElementById("status-acesso");
+  const campoSenha = document.getElementById("senha-adm");
+  const erroSenha = document.getElementById("erro-senha");
+  const btnEntrar = document.getElementById("btn-entrar");
+  const btnSair = document.getElementById("btn-sair");
+  const aviso = document.getElementById("aviso");
+
+  function aplicarPermissoes() {
+    statusAcesso.textContent = isAdmin ? "Acesso: ADM" : "Acesso: visitante (somente chat)";
+    campoSenha.style.display = isAdmin ? "none" : "";
+    btnEntrar.style.display = isAdmin ? "none" : "";
+    btnSair.style.display = isAdmin ? "" : "none";
+    erroSenha.textContent = "";
+    campoSenha.value = isAdmin ? "" : campoSenha.value;
+    document.querySelectorAll(".kaiju-bloco input").forEach(function (i) { i.disabled = !isAdmin; });
+    document.querySelectorAll("td.cel").forEach(function (c) { c.style.cursor = isAdmin ? "pointer" : "default"; });
+    aviso.textContent = isAdmin
+      ? "> Toque em uma célula para alternar o adesivo_"
+      : "> Somente o ADM pode alterar o painel. Use o chat abaixo para falar com o QA_";
+  }
+
+  btnEntrar.addEventListener("click", function () {
+    if (campoSenha.value === SENHA_ADM) {
+      isAdmin = true;
+      aplicarPermissoes();
+    } else {
+      erroSenha.textContent = "Senha incorreta";
+    }
+  });
+  btnSair.addEventListener("click", function () {
+    isAdmin = false;
+    aplicarPermissoes();
+  });
+  campoSenha.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") btnEntrar.click();
+  });
+  aplicarPermissoes();
+
+  function render(td, estado) {
+    const e = estados[estado];
+    td.innerHTML = e.cls ? '<span class="adesivo ' + e.cls + '">' + e.txt + "</span>" : "";
+  }
+</script>
+</body>
+</html>
